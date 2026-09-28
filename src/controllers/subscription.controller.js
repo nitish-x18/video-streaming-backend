@@ -67,11 +67,72 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 // controller to return subscriber list of a channel
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
     const { channelId } = req.params
+
+    if(!channelId){
+        throw new apiError(400, "channelId is required")
+    }
+
+    if(!isValidObjectId(channelId)){
+        throw new apiError(400, "Invalid channelId")
+    }
+
+    const channel = await User.findById(channelId);
+
+    if(!channel){
+        throw new apiError(404, "channel does not exist")
+    }
+
+    const subscriber = await Subscription.find(
+        {
+            channel: channelId
+        }
+    ).populate("subscriber")
+
+    return res
+    .status(200)
+    .json(
+        new apiResponse(
+            200,
+            subscriber,
+            "successfully fetched subscriber"
+        )
+    )
+
 })
 
 // controller to return channel list to which user has subscribed
 const getSubscribedChannels = asyncHandler(async (req, res) => {
     const { subscriberId } = req.params
+
+    if(!subscriberId){
+        throw new apiError(400, "subscriberId is required")
+    }
+
+    if(!isValidObjectId(subscriberId)){
+        throw new apiError(400, "Invalid subscriberId")
+    }
+
+    const user = await User.findById(subscriberId)
+
+    if(!user){
+        throw new apiError(404, "subscriber does not exist")
+    }
+
+    const subscribedChannels = await Subscription.find(
+        {
+            subscriber: subscriberId
+        }
+    ).populate("channel")
+
+    return res.
+    status(200)
+    .json(
+        new apiResponse(
+            200,
+            subscribedChannels,
+            "Subscribed channels fetched successfully"
+        )
+    )
 })
 
 export {
